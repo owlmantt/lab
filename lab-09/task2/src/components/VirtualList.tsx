@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from "react";
-import { FixedSizeList as List, ListChildComponentProps } from "react-window";
+
+import * as RW from "react-window"; 
 import { generateItems } from "../utils/generateItems";
 
 interface VirtualListProps {
@@ -9,6 +10,9 @@ interface VirtualListProps {
 
 export function VirtualList({ itemCount = 10000, height = 500 }: VirtualListProps) {
   const [filter, setFilter] = useState("");
+
+
+  const List = (RW as any).FixedSizeList || (RW as any).default?.FixedSizeList;
 
   const items = useMemo(() => generateItems(itemCount), [itemCount]);
 
@@ -21,22 +25,19 @@ export function VirtualList({ itemCount = 10000, height = 500 }: VirtualListProp
     );
   }, [filter, items]);
 
-  const Row = ({ index, style }: ListChildComponentProps) => {
+  const Row = ({ index, style }: { index: number; style: React.CSSProperties }) => {
     const item = filteredItems[index];
-    
     if (!item) return null;
 
     return (
       <div style={{ 
         ...style, 
         borderBottom: "1px solid #eee", 
-        padding: "10px",
-        boxSizing: "border-box"
+        padding: "10px", 
+        boxSizing: "border-box" 
       }}>
         <strong>{item.title}</strong> <span style={{ color: "#666" }}>({item.category})</span>
-        <p style={{ fontSize: "0.8rem", margin: "4px 0", color: "#333" }}>
-          {item.description}
-        </p>
+        <p style={{ fontSize: "0.8rem", margin: "4px 0" }}>{item.description}</p>
       </div>
     );
   };
@@ -48,26 +49,22 @@ export function VirtualList({ itemCount = 10000, height = 500 }: VirtualListProp
         placeholder="Поиск..."
         value={filter}
         onChange={(e) => setFilter(e.target.value)}
-        style={{ 
-          marginBottom: "10px", 
-          padding: "10px", 
-          width: "100%", 
-          boxSizing: "border-box",
-          borderRadius: "4px",
-          border: "1px solid #ccc"
-        }}
+        style={{ width: "100%", padding: "10px", marginBottom: "10px", boxSizing: "border-box" }}
       />
-      <p style={{ fontWeight: "bold" }}>Показано {filteredItems.length} элементов</p>
       
       <div style={{ border: "1px solid #eee" }}>
-        <List
-          height={height}
-          itemCount={filteredItems.length}
-          itemSize={80}
-          width="100%"
-        >
-          {Row}
-        </List>
+        {List ? (
+          <List
+            height={height}
+            itemCount={filteredItems.length}
+            itemSize={80}
+            width="100%"
+          >
+            {Row}
+          </List>
+        ) : (
+          <div style={{ color: "red" }}>Ошибка: Библиотека react-window не загружена.</div>
+        )}
       </div>
     </div>
   );
